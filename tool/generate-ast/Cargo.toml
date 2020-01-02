@@ -1,0 +1,14 @@
+[package]
+name = "generate-ast"
+version = "0.1.0"
+authors = ["Kinsey Favre <iyunkateus@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+phf = { version = "^0.8", features = ["macros"] }
+quote = "^0.6"
+proc-macro2 = "^0.4"
+heck = "^0.3"
+anyhow = "^1.0"
