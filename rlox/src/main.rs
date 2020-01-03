@@ -1,6 +1,6 @@
 extern crate anyhow;
 #[macro_use]
-extern crate phf;
+extern crate lazy_static;
 extern crate thiserror;
 
 mod lox;

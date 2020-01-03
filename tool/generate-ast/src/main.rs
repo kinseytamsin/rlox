@@ -1,11 +1,12 @@
 extern crate anyhow;
 extern crate heck;
 #[macro_use]
-extern crate phf;
+extern crate lazy_static;
 extern crate proc_macro2;
 #[macro_use]
 extern crate quote;
 
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{BufWriter, prelude::*};
@@ -60,7 +61,7 @@ fn define_kind(
 fn define_ast<P: AsRef<Path>>(
     output_dir: P,
     base_name: String,
-    kinds: phf::Map<&str, &str>,
+    kinds: &HashMap<&str, &str>,
 ) -> Result<()> {
     let mut tokens = TokenStream::new();
 
@@ -77,7 +78,7 @@ fn define_ast<P: AsRef<Path>>(
             #( #kind_names(#struct_names) ),*
         }
     });
-    for (&kind_name, &fields) in kinds.entries() {
+    for (&kind_name, &fields) in kinds.iter() {
         define_kind(
             &mut tokens,
             base_name.to_string(),
@@ -110,6 +111,16 @@ fn define_ast<P: AsRef<Path>>(
 }
 
 fn main() -> Result<()> {
+    lazy_static! {
+        static ref KINDS: HashMap<&'static str, &'static str> = {
+            let mut m = HashMap::new();
+            m.insert("Binary",   "left: Expr, operator: Token, right: Expr");
+            m.insert("Grouping", "expression: Expr");
+            m.insert("Literal",  "value: Literal");
+            m.insert("Unary",    "operator: Token, right: Expr");
+            m
+        };
+    }
     let args = env::args().skip(1).collect::<Vec<_>>();
     if args.len() != 1 {
         eprintln!("Usage: {} <output directory>", BINARY_NAME);
@@ -119,12 +130,7 @@ fn main() -> Result<()> {
     define_ast(
         output_dir,
         String::from("Expr"),
-        phf_map! {
-            "Binary"   => "left: Expr, operator: Token, right: Expr",
-            "Grouping" => "expression: Expr",
-            "Literal"  => "value: Literal",
-            "Unary"    => "operator: Token, right: Expr",
-        },
+        &KINDS
     )?;
     Ok(())
 }
