@@ -22,23 +22,23 @@ pub enum TokenKind {
 }
 
 #[derive(Debug)]
-pub enum Literal {
-    String(String),
+pub enum Literal<'a> {
+    String(&'a str),
     Number(f64),
 }
 
 #[derive(Debug)]
-pub struct Token {
+pub struct Token<'a> {
     kind: TokenKind,
-    lexeme: String,
-    literal: Option<Literal>,
+    lexeme: &'a str,
+    literal: Option<Literal<'a>>,
     line: usize,
 }
 
-impl Token {
+impl<'a> Token<'a> {
     pub fn new(kind: TokenKind,
-           lexeme: String,
-           literal: Option<Literal>,
+           lexeme: &'a str,
+           literal: Option<Literal<'a>>,
            line: usize) -> Self
     {
         Self { kind, lexeme, literal, line }

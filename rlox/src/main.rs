@@ -13,14 +13,14 @@ use std::process;
 
 use anyhow::Result;
 
+const BINARY_NAME: &str = "rlox";
+
 fn main() -> Result<()> {
-    let mut args_iter = env::args();
-    let executable = args_iter.next().unwrap();
-    let args: Vec<String> = args_iter.collect();
+    let args = env::args().skip(1).collect::<Box<_>>();
 
     match args.len().cmp(&1) {
         Ordering::Greater => {
-            println!("Usage: {} [script]", executable);
+            println!("Usage: {} [script]", BINARY_NAME);
             process::exit(64);
         }
         Ordering::Equal => {

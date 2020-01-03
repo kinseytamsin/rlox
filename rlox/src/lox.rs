@@ -45,12 +45,12 @@ impl Error {
     }
 }
 
-fn run(source: Vec<u8>) -> anyhow::Result<()> {
+fn run(source: &[u8]) -> anyhow::Result<()> {
     let scanner = Scanner::new(source);
     let tokens = scanner.scan_tokens()?;
 
     // For now, just print the tokens.
-    for token in tokens.into_iter() {
+    for token in tokens.iter() {
         println!("{:?}", token);
     }
     Ok(())
@@ -59,10 +59,8 @@ fn run(source: Vec<u8>) -> anyhow::Result<()> {
 pub fn run_file<P: AsRef<Path>>(path: P) -> anyhow::Result<()> {
     let mut bytes: Vec<u8> = Vec::new();
     File::open(path.as_ref())?.read_to_end(&mut bytes)?;
-    match run(bytes) {
-        Ok(_)  => Ok(()),
-        Err(e) => Err(e),
-    }
+
+    run(&bytes.into_boxed_slice())
 }
 
 pub fn run_prompt() -> anyhow::Result<()> {
@@ -72,9 +70,9 @@ pub fn run_prompt() -> anyhow::Result<()> {
     loop {
         print!("> ");
         io::stdout().flush()?;
-        let mut line = String::new();
-        handle.read_line(&mut line)?;
-        let run_result = run(line.into_bytes());
+        let mut line = Vec::<u8>::new();
+        handle.read_until(b'\n', &mut line)?;
+        let run_result = run(&line.into_boxed_slice());
         if let Err(e) = run_result {
             eprintln!("{}", e);
         }

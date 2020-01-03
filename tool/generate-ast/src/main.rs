@@ -28,9 +28,9 @@ const BINARY_NAME: &str = "generate-ast";
 
 fn define_kind(
     tokens: &mut TokenStream,
-    base_name: String,
-    kind_name: String,
-    field_list: String
+    base_name: &str,
+    kind_name: &str,
+    field_list: &str
 ) -> Result<()>
 {
     let struct_name = ident!(&format!("{}{}", base_name, kind_name));
@@ -38,7 +38,7 @@ fn define_kind(
     let field_names = fields.clone().map(
         |field| ident!(field.split(": ").nth(0).unwrap())
     );
-    let struct_fields = TokenStream::from_str(&field_list).unwrap();
+    let struct_fields = TokenStream::from_str(field_list).unwrap();
     let new_args = fields.clone().map(
         |field| TokenStream::from_str(field).unwrap()
     );
@@ -60,12 +60,12 @@ fn define_kind(
 
 fn define_ast<P: AsRef<Path>>(
     output_dir: P,
-    base_name: String,
+    base_name: &str,
     kinds: &HashMap<&str, &str>,
 ) -> Result<()> {
     let mut tokens = TokenStream::new();
 
-    let base_name_ident = ident!(&base_name);
+    let base_name_ident = ident!(base_name);
     let kind_names = kinds.keys().map(|x| ident!(x));
     let struct_names = kinds.keys().map(
         |kind| ident!(&format!("{}{}", base_name, kind))
@@ -81,9 +81,9 @@ fn define_ast<P: AsRef<Path>>(
     for (&kind_name, &fields) in kinds.iter() {
         define_kind(
             &mut tokens,
-            base_name.to_string(),
-            kind_name.to_string(),
-            fields.to_string()
+            base_name,
+            kind_name,
+            fields
         )?;
     }
     let code = tokens.to_string();
@@ -129,7 +129,7 @@ fn main() -> Result<()> {
     let output_dir = args[0].to_owned();
     define_ast(
         output_dir,
-        String::from("Expr"),
+        "Expr",
         &KINDS
     )?;
     Ok(())

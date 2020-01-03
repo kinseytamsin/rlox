@@ -37,16 +37,16 @@ lazy_static! {
     };
 }
 
-pub struct Scanner {
-    source:  Vec<u8>,
-    tokens:  Vec<Token>,
+pub struct Scanner<'a> {
+    source:  &'a [u8],
+    tokens:  Vec<Token<'a>>,
     start:   usize,
     current: usize,
     line:    usize,
 }
 
-impl Scanner {
-    pub fn new(source: Vec<u8>) -> Self {
+impl<'a> Scanner<'a> {
+    pub fn new(source: &'a [u8]) -> Self {
         Self {
             source,
             tokens:  Vec::new(),
@@ -60,9 +60,13 @@ impl Scanner {
         self.len() == 0
     }
 
-    fn add_token(&mut self, kind: TokenKind) -> lox::Result<()> {
+    fn add_token(
+        &mut self,
+        kind: TokenKind,
+        literal: Option<Literal<'a>>
+    ) -> lox::Result<()> {
         let Scanner {
-            ref source,
+            source,
             start,
             current,
             line,
@@ -71,26 +75,8 @@ impl Scanner {
         let _text = str::from_utf8(&source[start..current]);
         return_if_err!(_text, line);
         let Scanner { ref mut tokens, .. } = *self;
-        let text = _text.unwrap().to_string();
-        tokens.push(Token::new(kind, text, None, line));
-        Ok(())
-    }
-
-    fn add_token_with_value(&mut self,
-                            kind: TokenKind,
-                            literal: Literal) -> lox::Result<()> {
-        let Scanner {
-            ref source,
-            start,
-            current,
-            line,
-            ..
-        } = *self;
-        let _text = str::from_utf8(&source[start..current]);
-        return_if_err!(_text, line);
-        let Scanner { ref mut tokens, .. } = *self;
-        let text = _text.unwrap().to_string();
-        tokens.push(Token::new(kind, text, Some(literal), line));
+        let text = _text.unwrap();
+        tokens.push(Token::new(kind, text, literal, line));
         Ok(())
     }
 
@@ -136,7 +122,7 @@ impl Scanner {
         self.next();
 
         let Scanner {
-            ref source,
+            source,
             line,
             start,
             current,
@@ -146,11 +132,9 @@ impl Scanner {
         // Trim the surrounding quotes.
         let _value = str::from_utf8(&source[(start + 1)..(current - 1)]);
         return_if_err!(_value, line);
-        let value = _value.unwrap().to_string();
-        match self.add_token_with_value(STRING, Literal::String(value)) {
-            Ok(_)  => Ok(()),
-            Err(e) => Err(e),
-        }
+        let value = _value.unwrap();
+
+        self.add_token(STRING, Some(Literal::String(value)))
     }
 
     fn number(&mut self) -> lox::Result<()> {
@@ -171,7 +155,7 @@ impl Scanner {
         }
 
         let Scanner {
-            ref source,
+            source,
             line,
             start,
             current,
@@ -185,10 +169,7 @@ impl Scanner {
         return_if_err!(_value, line);
         let value = _value.unwrap();
 
-        match self.add_token_with_value(NUMBER, Literal::Number(value)) {
-            Ok(_)  => Ok(()),
-            Err(e) => Err(e),
-        }
+        self.add_token(NUMBER, Some(Literal::Number(value)))
     }
 
     fn identifier(&mut self) -> lox::Result<()> {
@@ -197,7 +178,7 @@ impl Scanner {
             _ => false,
         }) { self.next(); }
 
-        let Scanner { ref source, line, start, current, .. } = *self;
+        let Scanner { source, line, start, current, .. } = *self;
 
         // See if the identifier is a reserved word.
         let _text = str::from_utf8(&source[start..current]);
@@ -207,10 +188,8 @@ impl Scanner {
             Some(&x) => x,
             None => IDENTIFIER,
         };
-        match self.add_token(kind) {
-            Ok(_)  => Ok(()),
-            Err(e) => Err(e),
-        }
+
+        self.add_token(kind, None)
     }
 
     fn scan_token(&mut self) -> lox::Result<()> {
@@ -265,30 +244,30 @@ impl Scanner {
                 let Scanner { ref mut line, .. } = *self;
                 *line += 1;
             },
-            _ => { self.add_token(token)?; },
+            _ => { self.add_token(token, None)?; },
         }
         result
     }
 
-    pub fn scan_tokens(mut self) -> lox::Result<Vec<Token>> {
+    pub fn scan_tokens(mut self) -> lox::Result<Box<[Token<'a>]>> {
         while !self.is_at_end() {
-            // We are at the beginning of the next lexeme.
             let Scanner { ref mut start, current, .. } = self;
+            // We are at the beginning of the next lexeme.
             *start = current;
             self.scan_token()?;
         }
 
         let Scanner { ref mut tokens, line, .. } = self;
-        tokens.push(Token::new(EOF, String::from(""), None, line));
-        Ok(self.tokens)
+        tokens.push(Token::new(EOF, "", None, line));
+        Ok(self.tokens.into_boxed_slice())
     }
 }
 
-impl Iterator for Scanner {
+impl Iterator for Scanner<'_> {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let Scanner { ref source, current, .. } = *self;
+        let Scanner { source, current, .. } = *self;
         let ret = source.get(current).copied();
         let Scanner { ref mut current, .. } = *self;
         *current += 1;
@@ -296,12 +275,13 @@ impl Iterator for Scanner {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.source.len() as isize - self.current as isize;
-        let size: usize = if size > 0 { size as usize } else { 0 };
+        let Scanner { source, current, .. } = *self;
+        let size = source.len() as isize - current as isize;
+        let size = if size > 0 { size as usize } else { 0 };
         (size, Some(size))
     }
 }
 
-impl ExactSizeIterator for Scanner {}
+impl ExactSizeIterator for Scanner<'_> {}
 
-impl FusedIterator for Scanner {}
+impl FusedIterator for Scanner<'_> {}
