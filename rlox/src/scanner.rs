@@ -62,16 +62,10 @@ impl<'a> Scanner<'a> {
 
     fn add_token(
         &mut self,
-        kind: TokenKind,
-        literal: Option<Literal<'a>>
+        kind:    TokenKind,
+        literal: Option<Literal<'a>>,
     ) -> lox::Result<()> {
-        let Scanner {
-            source,
-            start,
-            current,
-            line,
-            ..
-        } = *self;
+        let Scanner { source, start, current, line, ..  } = *self;
         let _text = str::from_utf8(&source[start..current]);
         return_if_err!(_text, line);
         let Scanner { ref mut tokens, .. } = *self;
@@ -81,11 +75,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn matches(&mut self, expected: u8) -> bool {
-        let Scanner {
-            ref source,
-            current,
-            ..
-        } = *self;
+        let Scanner { ref source, current, ..  } = *self;
         if self.is_at_end() || (source[current] != expected) {
             false
         } else {
@@ -96,11 +86,13 @@ impl<'a> Scanner<'a> {
     }
 
     fn peek(&self) -> Option<u8> {
-        self.source.get(self.current).copied()
+        let Scanner { ref source, current, .. } = *self;
+        source.get(current).copied()
     }
 
     fn peek_next(&self) -> Option<u8> {
-        self.source.get(self.current + 1).copied()
+        let Scanner { ref source, current, .. } = *self;
+        source.get(current + 1).copied()
     }
 
     fn string(&mut self) -> lox::Result<()> {
@@ -114,20 +106,15 @@ impl<'a> Scanner<'a> {
 
         if self.is_at_end() {
             let Scanner { line, .. } = *self;
-            return Err(lox::Error::new(line,
-                                       lox::ErrorKind::UnterminatedString));
+            return Err(
+                lox::Error::new(line, lox::ErrorKind::UnterminatedString)
+            );
         }
 
         // The closing ".
         self.next();
 
-        let Scanner {
-            source,
-            line,
-            start,
-            current,
-            ..
-        } = *self;
+        let Scanner { source, line, start, current, ..  } = *self;
 
         // Trim the surrounding quotes.
         let _value = str::from_utf8(&source[(start + 1)..(current - 1)]);
@@ -144,7 +131,7 @@ impl<'a> Scanner<'a> {
 
         // Look for a fractional part.
         if self.peek() == Some(b'.')
-           && self.peek_next().map_or(false, |c| c.is_ascii_digit())
+            && self.peek_next().map_or(false, |c| c.is_ascii_digit())
         {
             // Consume the "."
             self.next();
@@ -154,13 +141,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let Scanner {
-            source,
-            line,
-            start,
-            current,
-            ..
-        } = *self;
+        let Scanner { source, line, start, current, ..  } = *self;
 
         let _token_str = str::from_utf8(&source[start..current]);
         return_if_err!(_token_str, line);
@@ -173,10 +154,17 @@ impl<'a> Scanner<'a> {
     }
 
     fn identifier(&mut self) -> lox::Result<()> {
-        while self.peek().map_or(false, |c| match c {
-            b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'_' => true,
-            _ => false,
-        }) { self.next(); }
+        while self.peek()
+            .map_or(
+                false,
+                |c| match c {
+                    b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'_' => true,
+                    _ => false,
+                },
+            )
+        {
+            self.next();
+        }
 
         let Scanner { source, line, start, current, .. } = *self;
 
@@ -186,7 +174,7 @@ impl<'a> Scanner<'a> {
         let text = _text.unwrap();
         let kind = match KEYWORDS.get(text) {
             Some(&x) => x,
-            None => IDENTIFIER,
+            None     => IDENTIFIER,
         };
 
         self.add_token(kind, None)
@@ -217,34 +205,44 @@ impl<'a> Scanner<'a> {
                         self.next();
                     }
                     COMMENT
-                } else {
-                    SLASH
-                }
+                } else { SLASH }
             }
-            b' ' | b'\r' | b'\t' => WHITESPACE,
-            b'\n' => NEWLINE,
-            b'"' => STRING,
-            b'0'..=b'9' => NUMBER,
+            b' ' | b'\r' | b'\t'      => WHITESPACE,
+            b'\n'                     => NEWLINE,
+            b'"'                      => STRING,
+            b'0'..=b'9'               => NUMBER,
             b'A'..=b'Z' | b'a'..=b'z' => IDENTIFIER,
             _   => {
                 let Scanner { line, .. } = *self;
-                result = Err(
-                    lox::Error::new(line, lox::ErrorKind::UnexpectedCharacter)
-                );
+                result =
+                    Err(
+                        lox::Error::new(
+                            line,
+                            lox::ErrorKind::UnexpectedCharacter
+                        )
+                    );
                 INVALID_TOKEN
             },
         };
 
         match token {
             COMMENT | WHITESPACE | INVALID_TOKEN => (),
-            STRING => { self.string()?; },
-            NUMBER => { self.number()?; },
-            IDENTIFIER => { self.identifier()?; },
+            STRING => {
+                self.string()?;
+            },
+            NUMBER => {
+                self.number()?;
+            },
+            IDENTIFIER => {
+                self.identifier()?;
+            },
             NEWLINE => {
                 let Scanner { ref mut line, .. } = *self;
                 *line += 1;
             },
-            _ => { self.add_token(token, None)?; },
+            _ => {
+                self.add_token(token, None)?;
+            },
         }
         result
     }

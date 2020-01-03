@@ -3,15 +3,15 @@ extern crate anyhow;
 extern crate lazy_static;
 extern crate thiserror;
 
-mod lox;
-mod scanner;
-mod token;
-
 use std::cmp::Ordering;
 use std::env;
 use std::process;
 
 use anyhow::Result;
+
+mod lox;
+mod scanner;
+mod token;
 
 const BINARY_NAME: &str = "rlox";
 

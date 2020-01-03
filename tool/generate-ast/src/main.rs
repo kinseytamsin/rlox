@@ -30,18 +30,15 @@ fn define_kind(
     tokens: &mut TokenStream,
     base_name: &str,
     kind_name: &str,
-    field_list: &str
-) -> Result<()>
-{
+    field_list: &str,
+) -> Result<()> {
     let struct_name = ident!(&format!("{}{}", base_name, kind_name));
     let fields = field_list.split(", ");
-    let field_names = fields.clone().map(
-        |field| ident!(field.split(": ").nth(0).unwrap())
-    );
+    let field_names =
+        fields.clone().map(|field| ident!(field.split(": ").nth(0).unwrap()));
     let struct_fields = TokenStream::from_str(field_list).unwrap();
-    let new_args = fields.clone().map(
-        |field| TokenStream::from_str(field).unwrap()
-    );
+    let new_args =
+        fields.clone().map(|field| TokenStream::from_str(field).unwrap());
     tokens.extend(quote! {
         struct #struct_name {
             #struct_fields
@@ -67,9 +64,8 @@ fn define_ast<P: AsRef<Path>>(
 
     let base_name_ident = ident!(base_name);
     let kind_names = kinds.keys().map(|x| ident!(x));
-    let struct_names = kinds.keys().map(
-        |kind| ident!(&format!("{}{}", base_name, kind))
-    );
+    let struct_names =
+        kinds.keys().map(|kind| ident!(&format!("{}{}", base_name, kind)));
 
     tokens.extend(quote! {
         use crate::token::*;
@@ -79,19 +75,15 @@ fn define_ast<P: AsRef<Path>>(
         }
     });
     for (&kind_name, &fields) in kinds.iter() {
-        define_kind(
-            &mut tokens,
-            base_name,
-            kind_name,
-            fields
-        )?;
+        define_kind(&mut tokens, base_name, kind_name, fields)?;
     }
     let code = tokens.to_string();
 
-    let mut rustfmt = Command::new("rustfmt")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()?;
+    let mut rustfmt =
+        Command::new("rustfmt")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()?;
     {
         let mut stdin = rustfmt.stdin.take().unwrap();
         stdin.write_all(&code.into_bytes())?;
@@ -127,10 +119,6 @@ fn main() -> Result<()> {
         process::exit(1);
     }
     let output_dir = &args[0];
-    define_ast(
-        output_dir,
-        "Expr",
-        &KINDS
-    )?;
+    define_ast(output_dir, "Expr", &KINDS)?;
     Ok(())
 }

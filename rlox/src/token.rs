@@ -36,11 +36,12 @@ pub struct Token<'a> {
 }
 
 impl<'a> Token<'a> {
-    pub fn new(kind: TokenKind,
-           lexeme: &'a str,
-           literal: Option<Literal<'a>>,
-           line: usize) -> Self
-    {
+    pub fn new(
+        kind: TokenKind,
+        lexeme: &'a str,
+        literal: Option<Literal<'a>>,
+        line: usize,
+    ) -> Self {
         Self { kind, lexeme, literal, line }
     }
 }
