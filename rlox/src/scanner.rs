@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::iter::FusedIterator;
 use std::str;
 
@@ -13,24 +14,28 @@ macro_rules! return_if_err {
     }
 }
 
-const KEYWORDS: phf::Map<&str, TokenKind> = phf_map! {
-    "and"    => AND,
-    "class"  => CLASS,
-    "else"   => ELSE,
-    "false"  => FALSE,
-    "for"    => FOR,
-    "fun"    => FUN,
-    "if"     => IF,
-    "nil"    => NIL,
-    "or"     => OR,
-    "print"  => PRINT,
-    "return" => RETURN,
-    "super"  => SUPER,
-    "this"   => THIS,
-    "true"   => TRUE,
-    "var"    => VAR,
-    "while"  => WHILE,
-};
+lazy_static! {
+    static ref KEYWORDS: HashMap<&'static str, TokenKind> = {
+        let mut m = HashMap::new();
+        m.insert("and",    AND);
+        m.insert("class",  CLASS);
+        m.insert("else",   ELSE);
+        m.insert("false",  FALSE);
+        m.insert("for",    FOR);
+        m.insert("fun",    FUN);
+        m.insert("if",     IF);
+        m.insert("nil",    NIL);
+        m.insert("or",     OR);
+        m.insert("print",  PRINT);
+        m.insert("return", RETURN);
+        m.insert("super",  SUPER);
+        m.insert("this",   THIS);
+        m.insert("true",   TRUE);
+        m.insert("var",    VAR);
+        m.insert("while",  WHILE);
+        m
+    };
+}
 
 pub struct Scanner {
     source:  Vec<u8>,
