@@ -121,12 +121,12 @@ fn main() -> Result<()> {
             m
         };
     }
-    let args = env::args().skip(1).collect::<Vec<_>>();
+    let args = env::args().skip(1).collect::<Box<_>>();
     if args.len() != 1 {
         eprintln!("Usage: {} <output directory>", BINARY_NAME);
         process::exit(1);
     }
-    let output_dir = args[0].to_owned();
+    let output_dir = &args[0];
     define_ast(
         output_dir,
         "Expr",
