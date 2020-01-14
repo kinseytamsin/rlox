@@ -109,7 +109,7 @@ fn main() -> Result<()> {
             m
         };
     }
-    let args = env::args().skip(1).collect::<Box<_>>();
+    let args = env::args().skip(1).collect::<Vec<_>>();
     if args.len() != 1 {
         eprintln!("Usage: {} <output directory>", BINARY_NAME);
         process::exit(1);

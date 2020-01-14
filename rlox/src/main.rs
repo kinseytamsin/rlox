@@ -13,7 +13,7 @@ mod token;
 const BINARY_NAME: &str = "rlox";
 
 fn main() -> Result<()> {
-    let args = env::args().skip(1).collect::<Box<_>>();
+    let args = env::args().skip(1).collect::<Vec<_>>();
 
     match args.len().cmp(&1) {
         Ordering::Greater => {
