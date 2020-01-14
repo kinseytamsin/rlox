@@ -1,22 +1,18 @@
-extern crate anyhow;
-extern crate heck;
-#[macro_use]
-extern crate lazy_static;
-extern crate proc_macro2;
-#[macro_use]
-extern crate quote;
-
-use std::collections::HashMap;
-use std::env;
-use std::fs::File;
-use std::io::{BufWriter, prelude::*};
-use std::path::{Path, PathBuf};
-use std::process::{self, Command, Stdio};
-use std::str::FromStr;
+use std::{
+    collections::HashMap,
+    env,
+    fs::File,
+    io::{BufWriter, prelude::*},
+    path::{Path, PathBuf},
+    process::{self, Command, Stdio},
+    str::FromStr,
+};
 
 use anyhow::Result;
 use heck::SnakeCase;
+use lazy_static::lazy_static;
 use proc_macro2::{Ident, Span, TokenStream};
+use quote::quote;
 
 macro_rules! ident {
     ($x: expr) => {

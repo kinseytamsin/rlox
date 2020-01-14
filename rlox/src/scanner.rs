@@ -1,9 +1,15 @@
-use std::collections::HashMap;
-use std::iter::FusedIterator;
-use std::str;
+use std::{
+    collections::HashMap,
+    iter::FusedIterator,
+    str,
+};
 
-use crate::lox;
-use crate::token::{*, TokenKind::*};
+use lazy_static::lazy_static;
+
+use crate::{
+    lox,
+    token::{*, TokenKind::*},
+};
 
 macro_rules! return_if_err {
     ($result: expr, $line: expr) => {

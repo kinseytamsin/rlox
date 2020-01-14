@@ -1,11 +1,8 @@
-extern crate anyhow;
-#[macro_use]
-extern crate lazy_static;
-extern crate thiserror;
-
-use std::cmp::Ordering;
-use std::env;
-use std::process;
+use std::{
+    cmp::Ordering,
+    env,
+    process
+};
 
 use anyhow::Result;
 

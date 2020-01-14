@@ -1,6 +1,8 @@
-use std::fs::File;
-use std::io::{self, prelude::*};
-use std::path::Path;
+use std::{
+    fs::File,
+    io::{self, prelude::*},
+    path::Path,
+};
 
 use anyhow;
 use thiserror;
