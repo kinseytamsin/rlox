@@ -15,8 +15,14 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 
 macro_rules! ident {
-    ($x: expr) => {
+    ($x:expr) => {
         Ident::new($x, Span::call_site())
+    }
+}
+
+macro_rules! ident_fmt {
+    ($($tt:tt)+) => {
+        ident!(&format!($($tt)+))
     }
 }
 
@@ -28,7 +34,7 @@ fn define_kind(
     kind_name: &str,
     field_list: &str,
 ) -> Result<()> {
-    let struct_name = ident!(&format!("{}{}", base_name, kind_name));
+    let struct_name = ident_fmt!("{}{}", base_name, kind_name);
     let fields = field_list.split(", ");
     let field_names =
         fields.clone().map(|field| ident!(field.split(": ").nth(0).unwrap()));
@@ -61,7 +67,7 @@ fn define_ast<P: AsRef<Path>>(
     let base_name_ident = ident!(base_name);
     let kind_names = kinds.keys().map(|x| ident!(x));
     let struct_names =
-        kinds.keys().map(|kind| ident!(&format!("{}{}", base_name, kind)));
+        kinds.keys().map(|kind| ident_fmt!("{}{}", base_name, kind));
 
     tokens.extend(quote! {
         use crate::token::*;
