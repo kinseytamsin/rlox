@@ -8,7 +8,7 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use heck::SnakeCase;
 use lazy_static::lazy_static;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -29,19 +29,19 @@ macro_rules! ident_fmt {
 const BINARY_NAME: &str = "generate-ast";
 
 fn define_kind(
-    tokens: &mut TokenStream,
     base_name: &str,
     kind_name: &str,
     field_list: &str,
-) -> Result<()> {
+) -> Result<TokenStream> {
     let struct_name = ident_fmt!("{}{}", base_name, kind_name);
     let fields = field_list.split(", ");
     let field_names =
         fields.clone().map(|field| ident!(field.split(": ").nth(0).unwrap()));
-    let struct_fields = TokenStream::from_str(field_list).unwrap();
+    let struct_fields =
+        TokenStream::from_str(field_list).map_err(|e| anyhow!("{:?}", e))?;
     let new_args =
         fields.clone().map(|field| TokenStream::from_str(field).unwrap());
-    tokens.extend(quote! {
+    Ok(quote! {
         struct #struct_name {
             #struct_fields
         }
@@ -53,8 +53,7 @@ fn define_kind(
                 }
             }
         }
-    });
-    Ok(())
+    })
 }
 
 fn define_ast<P: AsRef<Path>>(
@@ -68,16 +67,35 @@ fn define_ast<P: AsRef<Path>>(
     let kind_names = kinds.keys().map(|x| ident!(x));
     let struct_names =
         kinds.keys().map(|kind| ident_fmt!("{}{}", base_name, kind));
-
+    let visit_method_name = ident_fmt!("visit_{}", base_name.to_snake_case());
     tokens.extend(quote! {
         use crate::token::*;
 
         enum #base_name_ident {
             #( #kind_names(#struct_names) ),*
         }
+
+        trait Visitor {
+            type Result;
+
+            fn #visit_method_name(
+                &mut self,
+                v: &#base_name_ident
+            ) -> Self::Result;
+        }
+
+        trait Visitable {
+            fn accept<V: Visitor>(&self, visitor: &mut V) -> V::Result;
+        }
+
+        impl Visitable for #base_name_ident {
+            fn accept<V: Visitor>(&self, visitor: &mut V) -> V::Result {
+                visitor.#visit_method_name(self)
+            }
+        }
     });
     for (&kind_name, &fields) in kinds.iter() {
-        define_kind(&mut tokens, base_name, kind_name, fields)?;
+        tokens.extend(define_kind(base_name, kind_name, fields)?);
     }
     let code = tokens.to_string();
 
